@@ -28,10 +28,18 @@ current week's bins as native entities. Config is entirely through the UI.
   them - nothing to install by hand, and they survive updates.
 
 ## Install
-1. Copy `custom_components/hertsmere_bins/` into `config/custom_components/`
-   (or add the repo to HACS as a custom repository) and restart HA.
-2. **Settings -> Devices & Services -> Add Integration -> Hertsmere Bin Collection.**
-3. Pick your collection weekday and version letter; the base URL default is fine.
+
+### Via HACS
+1. HACS -> the three-dot menu (top right) -> **Custom repositories** -> add
+   `https://github.com/crt/ha-hertsmere-bins` as an **Integration**.
+2. Find **Hertsmere Bin Collection** in HACS and install it, then restart HA.
+
+### Manual
+1. Copy `custom_components/hertsmere_bins/` into `config/custom_components/` and restart HA.
+
+### Then
+1. **Settings -> Devices & Services -> Add Integration -> Hertsmere Bin Collection.**
+2. Pick your collection weekday and version letter; the base URL default is fine.
 
 ## Options (Configure)
 Collection weekday, version, base URL, renewal threshold (days), display names for the
@@ -47,3 +55,6 @@ W2 weeks show food + recycling + garden.
   W2 = food + recycling + garden). Edit `WEEK_BINS` in `core.py` if the council changes it.
 - Parsing targets the current calendar layout; if a future layout breaks it, the setup
   step surfaces an error and the fallback parser is attempted.
+
+## License
+AGPL-3.0 - see [LICENSE](LICENSE).

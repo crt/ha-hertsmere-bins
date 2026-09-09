@@ -1,97 +1,117 @@
 type: tile
+visibility:
+  - condition: state
+    attribute: upcoming
+    state: 'true'
 entity: sensor.hertsmere_bin_collection_this_week
-icon: mdi:trash-can
+icon: mdi:trash-can-outline
+color: red
+vertical: false
 tap_action:
   action: more-info
+features_position: bottom
 card_mod:
   style:
     .: |
+      {% set e = config.entity %}
+      {% set d = as_datetime(state_attr(e, 'collection_date'), none) %}
+      {% set diff = (d.date() - now().date()).days if d else 99 %}
+      {% set today = state_attr(e, 'is_collection_day') | bool(false) %}
+      {% set bh    = state_attr(e, 'bank_holiday_week') | bool(false) %}
+      {% set exp   = state_attr(e, 'expiring_soon') | bool(false) %}
+
+      {% set prefix = state_attr(e, 'title_prefix') or 'Bin collection:' %}
+      {% set day = state_attr(e, 'collection_day') or '' %}
+      {% set bins = (state_attr(e, 'bins') or []) | join(', ') %}
+
+      {# Hover text. Uses a 'tooltip' attribute if present, else the date. #}
+      {% set tip = (state_attr(e, 'tooltip')
+               or ('Collection date: ' ~ (state_attr(e, 'collection_date') or 'unknown')))
+               ~ ('\A 📅 ' ~ state_attr(e, 'expiry_note') if exp else '')
+               ~ ('\A ⚠️ ' ~ state_attr(e, 'bank_holiday_note') if bh else '') %}
+
       ha-card {
-        /* Lets the hover tooltip escape the card edge. Remove if the rounded
-           ripple corners look off on your theme. */
+        position: relative !important;
         overflow: visible !important;
 
-        {% set e = config.entity %}
-        {% set d = as_datetime(state_attr(e, 'collection_date'), none) %}
-        {% set diff = (d.date() - now().date()).days if d else 99 %}
-        {% set today = state_attr(e, 'is_collection_day') | bool(false) %}
-        {% set bh    = state_attr(e, 'bank_holiday_week') | bool(false) %}
-        {% set exp   = state_attr(e, 'expiring_soon')     | bool(false) %}
         {% if bh %}
         background: rgba(255, 69, 69, 0.16) !important;
         {% elif exp %}
         background: rgba(0, 10, 255, 0.16) !important;
         {% elif diff == 1 %}
-        background: rgba(255, 193, 7, 0.20) !important;
-        {% elif today %}
         background: rgba(var(--rgb-primary-color), 0.12) !important;
+        {% elif today %}
+        background: rgba(250, 193, 7, 0.20) !important;
         {% endif %}
       }
+
+      ha-card::after {
+        content: "{{ tip }}";
+        display: none;
+        position: absolute;
+        left: 10px;
+        bottom: calc(100% + 3px);
+        z-index: 1000;
+
+        padding: 8px 10px;
+        border-radius: 6px;
+
+        background: {% if exp %}#ffcccc{% elif bh %}#44ccff{% else %}var(--secondary-background-color){% endif %};
+        color: var(--primary-text-color);
+
+        font-size: var(--ha-font-size-m, 0.875rem);
+        font-weight: 400;
+        line-height: 1.5;
+
+        white-space: pre-line;
+        width: max-content;
+        max-width: calc(100vw - 32px);
+
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+
+        pointer-events: none;
+      }
+
+      ha-card:hover::after,
+      ha-card:active::after {
+        display: block;
+      }
+
       ha-tile-info {
         overflow: visible !important;
       }
+
       .tile {
         overflow: visible !important;
       }
-      :host(:hover),
-      :host(:active) {
-        --tile-hover: block;
-      }
-    ha-tile-info$: |
-      {% set e = config.entity %}
-      {% set prefix = state_attr(e, 'title_prefix') or 'Bin collection:' %}
-      {% set day = state_attr(e, 'collection_day') or '' %}
-      {% set exp = state_attr(e, 'expiring_soon')     | bool(false) %}
-      {% set bh  = state_attr(e, 'bank_holiday_week') | bool(false) %}
-      {% set bins = (state_attr(e, 'bins') or []) | join(', ') %}
-      {# Hover text. Uses a 'tooltip' attribute if present, else the date. #}
-      {% set tip = (state_attr(e, 'tooltip')
-                   or ('Collection date: ' ~ (state_attr(e, 'collection_date') or 'unknown')))
-                   ~ ('\A 📅 ' ~ state_attr(e, 'expiry_note') if exp else '')
-                   ~ ('\A ⚠️ ' ~ state_attr(e, 'bank_holiday_note') if bh else '') %}
 
-      :host {
-        overflow: visible !important;
-      }
-
+      /* Restore original Primary text */
       .primary {
-        position: relative;            /* anchor for the tooltip */
         font-size: 0 !important;
         line-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
       }
+
       .primary::after {
         content: "{% if exp %}📅 {% endif %}{% if bh %}⚠️ {% endif %}{{ prefix }} {{ day }}";
+        display: block;
+        margin: 0 !important;
+        padding: 0 !important;        
         font-size: var(--ha-font-size-l, 1rem) !important;
         line-height: 1.4 !important;
         font-weight: 500;
       }
 
-      /* Hover is detected on .tile (the outer shadow DOM) via --tile-hover,
-         because ha-ripple steals pointer events from .primary and :host. */
-      .primary::before {
-        content: "{{ tip }}";
-        display: var(--tile-hover, none);
-        position: absolute;
-        left: 0;
-        bottom: calc(100% + 6px);
-        z-index: 9;
-        padding: 8px 10px;
-        margin: -5px 0px;
-        border-radius: 6px;
-        line-height: 1.5;
-        background: {% if exp %}#ffcccc{% elif bh %}#44ccff{% else %}var(--secondary-background-color){% endif %};
-        color: var(--primary-text-color);
-        font-size: var(--ha-font-size-m, 0.875rem);
-        font-weight: 400;
-        white-space: pre-line;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-        pointer-events: none;
+      /* Restore original Secondary text */
+      .secondary {
+        font-size: 0 !important;
+        line-height: 0 !important;
       }
 
-      .secondary { font-size: 0 !important; line-height: 0 !important; }
       .secondary::after {
         content: "{{ bins }}";
-        font-size: var(--ha-font-size-m, 0.875rem) !important;
+        font-size: var(--ha-font-size-s, 0.875rem) !important;
         line-height: 1.3 !important;
       }
 

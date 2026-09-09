@@ -1,0 +1,60 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  hassfest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Log in to GHCR (avoids anonymous-pull rate limits)
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      - name: Hassfest validation
+        uses: home-assistant/actions/hassfest@master
+
+  hacs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: HACS validation
+        uses: hacs/action@main
+        with:
+          category: integration
+
+  release:
+    needs: [hassfest, hacs]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check tag matches manifest.json version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          MANIFEST_VERSION=$(python3 -c "import json; print(json.load(open('custom_components/hertsmere_bins/manifest.json'))['version'])")
+          if [ "$TAG" != "$MANIFEST_VERSION" ]; then
+            echo "Tag $GITHUB_REF_NAME (version $TAG) does not match manifest.json version $MANIFEST_VERSION"
+            exit 1
+          fi
+
+      - name: Build release archives
+        run: |
+          NAME="ha-hertsmere-bins"
+          mkdir -p dist
+          cd custom_components/hertsmere_bins
+          zip -r "../../dist/${NAME}.zip" *
+          tar -czf "../../dist/${NAME}.tar.gz" *
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          make_latest: "legacy"
+          files: |
+            dist/*.zip
+            dist/*.tar.gz

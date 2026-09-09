@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  hassfest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Hassfest validation
+        uses: home-assistant/actions/hassfest@master
+
+  release:
+    needs: [hassfest]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Check tag matches manifest.json version
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME#v}"
+          MANIFEST_VERSION=$(python3 -c "import json; print(json.load(open('custom_components/hertsmere_bins/manifest.json'))['version'])")
+          if [ "$TAG" != "$MANIFEST_VERSION" ]; then
+            echo "Tag $GITHUB_REF_NAME (version $TAG) does not match manifest.json version $MANIFEST_VERSION"
+            exit 1
+          fi
+
+      - name: Build release archives
+        run: |
+          set -euo pipefail
+          NAME="ha-hertsmere-bins"
+          mkdir -p dist
+          cd custom_components/hertsmere_bins
+          zip -r "../../dist/${NAME}.zip" *
+          tar -czf "../../dist/${NAME}.tar.gz" *
+
+      - name: Generate changelog from commits
+        run: |
+          set -euo pipefail
+          PREV_TAG=$(git tag --sort=-creatordate | sed -n '2p')
+          if [ -n "$PREV_TAG" ]; then
+            git log "${PREV_TAG}..${GITHUB_REF_NAME}" --pretty=format:'- %s (%h)' > notes.txt
+            printf '\n\nFull changelog: %s/%s/compare/%s...%s\n' \
+              "${{ gitea.server_url }}" "${{ gitea.repository }}" "$PREV_TAG" "$GITHUB_REF_NAME" >> notes.txt
+          else
+            git log --pretty=format:'- %s (%h)' > notes.txt
+          fi
+
+      - name: Create Gitea release
+        env:
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+          API: ${{ gitea.server_url }}/api/v1/repos/${{ gitea.repository }}
+        run: |
+          set -euo pipefail
+          python3 -c "
+          import json, os
+          notes = open('notes.txt').read()
+          tag = os.environ['GITHUB_REF_NAME']
+          json.dump({'tag_name': tag, 'name': tag, 'body': notes, 'draft': False, 'prerelease': False}, open('payload.json', 'w'))
+          "
+          RELEASE_ID=$(curl -sSf -X POST "${API}/releases" \
+            -H "Authorization: token ${GITEA_TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data @payload.json | python3 -c "import json,sys; print(json.load(sys.stdin)['id'])")
+          for f in dist/*; do
+            curl -sSf -X POST "${API}/releases/${RELEASE_ID}/assets?name=$(basename "$f")" \
+              -H "Authorization: token ${GITEA_TOKEN}" \
+              -F "attachment=@${f}"
+          done

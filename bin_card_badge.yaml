@@ -1,0 +1,34 @@
+type: entity
+show_name: true
+show_state: true
+show_icon: true
+entity: sensor.hertsmere_bin_collection_this_week
+state_content: bins
+color: red
+show_entity_picture: false
+visibility:
+  - condition: state
+    attribute: upcoming
+    state: 'true'
+name: 'Bin collection: Friday'
+card_mod:
+  style:
+    ha-badge$: |
+      {% set e = config.entity %}
+      {% set d = as_datetime(state_attr(e, 'collection_date'), none) %}
+      {% set diff = (d.date() - now().date()).days if d else 99 %}
+      {% set today = state_attr(e, 'is_collection_day') | bool(false) %}
+      {% set bh    = state_attr(e, 'bank_holiday_week') | bool(false) %}
+      {% set exp   = state_attr(e, 'expiring_soon')     | bool(false) %}
+      .badge {
+        {% if exp %}
+        --ha-card-background: rgba(255, 69, 69, 0.16) !important;
+        {% elif bh %}
+        --ha-card-background: rgba(40, 180, 255, 0.4) !important;
+        {% elif diff == 1 %}
+        --ha-card-background: rgba(255, 193, 7, 0.15) !important;
+        {% elif today %}
+        --ha-card-background: rgba(255, 193, 7, 0.45) !important;
+        {% endif %}
+        --ha-badge-border-color: transparent;
+
