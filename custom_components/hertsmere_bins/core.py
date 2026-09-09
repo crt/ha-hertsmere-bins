@@ -24,7 +24,15 @@ _MONTHS = {m: i for i, m in enumerate(
      "July","August","September","October","November","December"], start=1)}
 _HEADER_RE = re.compile(r"\b(" + "|".join(_MONTHS) + r")\s+(\d{4})")
 _HEADER_LINE_RE = re.compile(r"^\s*(" + "|".join(_MONTHS) + r")\s+(\d{4})\s*$")
-_WLINE_RE = re.compile(r"(W[12])((?:\s+\d{1,2})+)")
+_WLINE_RE = re.compile(
+    r"(?:(?P<label1>W[12])(?P<digits1>(?:\s+\d{1,2})+))"
+    r"|(?:(?P<digits2>(?:\d{1,2}\s+)+)(?P<label2>W[12]))"
+)
+
+
+def _wline_match(wm) -> tuple[str, str]:
+    """Return (label, digits-string) regardless of which side the label matched on."""
+    return wm["label1"] or wm["label2"], wm["digits1"] or wm["digits2"]
 
 
 # ---- period / URL ----------------------------------------------------------
@@ -65,8 +73,11 @@ def _fragments(pdf_bytes: bytes):
 
 
 def _column_boundaries(frags):
-    """Cluster the x-positions of month headers into columns; return split xs."""
-    xs = sorted(x for (_, x, _, t) in frags if _HEADER_RE.search(t))
+    """Cluster the x-positions of month headers into columns; return split xs.
+    Only fragments that are themselves exactly a header (e.g. "July 2026")
+    count - a month name mentioned in passing elsewhere on the page (e.g. a
+    footer note) must not be mistaken for a grid header and skew the columns."""
+    xs = sorted(x for (_, x, _, t) in frags if _HEADER_LINE_RE.match(t))
     anchors: list[float] = []
     for x in xs:
         if not anchors or x - anchors[-1] > 40:   # new column if >40pt gap
@@ -114,8 +125,8 @@ def parse_lines(lines) -> dict[str, str]:
         if month is None:
             continue
         for wm in _WLINE_RE.finditer(line):
-            label = wm.group(1)
-            for d in re.findall(r"\d{1,2}", wm.group(2)):
+            label, digits = _wline_match(wm)
+            for d in re.findall(r"\d{1,2}", digits):
                 if 1 <= int(d) <= 31:
                     try:
                         labels[date(year, month, int(d)).isoformat()] = label
@@ -145,8 +156,8 @@ def parse_layout_text(text: str) -> dict[str, str]:
             continue
         for left, right, mo, yr in bands:
             for wm in _WLINE_RE.finditer(line[left:right]):
-                label = wm.group(1)
-                for d in re.findall(r"\d{1,2}", wm.group(2)):
+                label, digits = _wline_match(wm)
+                for d in re.findall(r"\d{1,2}", digits):
                     if 1 <= int(d) <= 31:
                         try:
                             labels[date(yr, mo, int(d)).isoformat()] = label

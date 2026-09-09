@@ -11,6 +11,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.loader import async_get_integration
 import homeassistant.util.dt as dt_util
 
 from . import core
@@ -71,6 +72,7 @@ class HertsmereBinsCoordinator(DataUpdateCoordinator[BinsData]):
         self._labels: dict[str, str] = {}
         self._sources: set[str] = set()
         self._loaded = False
+        self._integration_version: str | None = None
 
     def _opts(self) -> dict[str, Any]:
         return {**self.config_entry.data, **self.config_entry.options}
@@ -78,16 +80,28 @@ class HertsmereBinsCoordinator(DataUpdateCoordinator[BinsData]):
     async def _async_load_cache(self) -> None:
         if self._loaded:
             return
+        integration = await async_get_integration(self.hass, DOMAIN)
+        current_version = integration.version
         cached = await self._store.async_load()
         if cached:
-            self._labels = dict(cached.get("labels", {}))
-            self._sources = set(cached.get("sources", []))
+            if cached.get("integration_version") != str(current_version):
+                _LOGGER.debug(
+                    "hertsmere_bins updated (%s -> %s); discarding cached calendar "
+                    "so it is re-downloaded and re-parsed",
+                    cached.get("integration_version"), current_version,
+                )
+            else:
+                self._labels = dict(cached.get("labels", {}))
+                self._sources = set(cached.get("sources", []))
         self._loaded = True
+        self._integration_version = str(current_version)
 
     async def _async_save_cache(self) -> None:
-        await self._store.async_save(
-            {"labels": self._labels, "sources": sorted(self._sources)}
-        )
+        await self._store.async_save({
+            "labels": self._labels,
+            "sources": sorted(self._sources),
+            "integration_version": self._integration_version,
+        })
 
     async def _ensure_period(self, year: int, half: str, opts: dict) -> str | None:
         """Ingest a period's PDF if not already stored. Returns error string or None."""
