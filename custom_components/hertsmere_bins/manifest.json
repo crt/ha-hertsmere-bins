@@ -1,0 +1,11 @@
+{
+  "domain": "hertsmere_bins",
+  "name": "Hertsmere Bin Collection",
+  "version": "0.1.0",
+  "config_flow": true,
+  "documentation": "https://github.com/YOURUSER/hertsmere_bins",
+  "issue_tracker": "https://github.com/YOURUSER/hertsmere_bins/issues",
+  "codeowners": ["@YOURUSER"],
+  "iot_class": "cloud_polling",
+  "requirements": ["pypdf>=4.0.0", "holidays>=0.40"]
+}

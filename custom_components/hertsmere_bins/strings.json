@@ -1,0 +1,73 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Hertsmere Bin Collection",
+        "description": "Set up your bin collection sensor. The base URL and version letter are combined with the current period to build the calendar PDF link.",
+        "data": {
+          "collection_day": "Your collection weekday",
+          "version": "Calendar version",
+          "base_url": "Base URL (folder that holds the calendar PDFs)"
+        },
+        "data_description": {
+          "collection_day": "The weekday your bins are actually collected. This is not in the PDF, so you must set it.",
+          "version": "The letter at the end of the PDF filename (A or B), which identifies your collection round.",
+          "base_url": "Usually leave the default. The filename is built automatically from the year and half-year."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not download the calendar PDF from that URL.",
+      "parse_error": "Downloaded the file but could not read it as a calendar PDF.",
+      "empty": "The PDF was read but no collection weeks were found; check the version letter and URL."
+    },
+    "abort": {
+      "already_configured": "This calendar and collection day is already set up."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Hertsmere Bin Collection options",
+        "data": {
+          "collection_day": "Your collection weekday",
+          "version": "Calendar version",
+          "base_url": "Base URL",
+          "threshold_days": "Renewal threshold",
+          "name_food": "Food waste name (shown every week)",
+          "name_refuse": "Non-recyclable name (shown in W1 weeks)",
+          "name_recycling": "Recycling name (shown in W2 weeks)",
+          "name_garden": "Garden waste name (shown in W2 weeks)",
+          "bank_holiday_note": "Bank-holiday note",
+          "expiry_note": "Expiry note (icon hover text)",
+          "title_prefix": "Card title prefix",
+          "update_hours": "Refresh interval",
+          "upcoming_days": "Upcoming notice"
+        },
+        "data_description": {
+          "threshold_days": "When the loaded calendar has this many days left, the integration tries to download the next one and warns you if that fails.",
+          "upcoming_days": "How many days before collection the 'upcoming' attribute is set to true. 0 means only the collection day itself; 1 means also the day before; and so on.",
+          "bank_holiday_note": "Hover text for the bank-holiday icon on the card.",
+          "expiry_note": "Hover text for the expiry-warning icon on the card.",
+          "title_prefix": "Prefix for the card title, e.g. 'Bin collection:'.",
+          "update_hours": "How often to recompute the current week (hours). The PDF is only re-downloaded near expiry, not every refresh."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "this_week": {
+        "name": "This week"
+      }
+    },
+    "binary_sensor": {
+      "expiring_soon": {
+        "name": "Calendar expiring soon"
+      },
+      "bank_holiday_week": {
+        "name": "Bank holiday week"
+      }
+    }
+  }
+}
