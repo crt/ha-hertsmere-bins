@@ -12,15 +12,16 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.selector import (
     NumberSelector, NumberSelectorConfig, NumberSelectorMode,
     SelectSelector, SelectSelectorConfig, SelectSelectorMode, TextSelector,
+    TimeSelector,
 )
 import homeassistant.util.dt as dt_util
 
 from . import core
 from .const import (
-    CONF_BASE_URL, CONF_BH_NOTE, CONF_COLLECTION_DAY, CONF_EXPIRY_NOTE,
+    CONF_ACTIVE_UNTIL, CONF_BASE_URL, CONF_BH_NOTE, CONF_COLLECTION_DAY, CONF_EXPIRY_NOTE,
     CONF_NAME_FOOD, CONF_NAME_GARDEN, CONF_NAME_RECYCLING, CONF_NAME_REFUSE,
     CONF_THRESHOLD_DAYS, CONF_TITLE_PREFIX, CONF_UPDATE_HOURS, CONF_UPCOMING_DAYS,
-    CONF_VERSION, DEFAULT_DAY, DEFAULT_THRESHOLD_DAYS, DEFAULT_UPDATE_HOURS,
+    CONF_VERSION, DEFAULT_DAY, DEFAULT_ACTIVE_UNTIL, DEFAULT_THRESHOLD_DAYS, DEFAULT_UPDATE_HOURS,
     DEFAULT_UPCOMING_DAYS, DEFAULT_VERSION, DOMAIN,
 )
 
@@ -118,6 +119,8 @@ class HertsmereBinsOptionsFlow(OptionsFlow):
                 NumberSelector(NumberSelectorConfig(
                     min=0, max=14, step=1, mode=NumberSelectorMode.BOX,
                     unit_of_measurement="days")),
+            vol.Required(CONF_ACTIVE_UNTIL,
+                         default=cur.get(CONF_ACTIVE_UNTIL, DEFAULT_ACTIVE_UNTIL)): TimeSelector(),
             vol.Required(CONF_UPDATE_HOURS,
                          default=cur.get(CONF_UPDATE_HOURS, DEFAULT_UPDATE_HOURS)):
                 NumberSelector(NumberSelectorConfig(

@@ -46,6 +46,7 @@ class HertsmereBinsSensor(CoordinatorEntity[HertsmereBinsCoordinator], SensorEnt
             "bins": d.bins,
             "is_collection_day": d.is_collection_day,
             "upcoming": d.upcoming,
+            "active_until": d.active_until,
             "bank_holiday_week": d.bank_holiday_week,
             "bank_holidays": d.bank_holidays,
             "bank_holiday_note": d.bank_holiday_note,

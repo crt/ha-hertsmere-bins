@@ -16,11 +16,11 @@ import homeassistant.util.dt as dt_util
 
 from . import core
 from .const import (
-    CONF_BASE_URL, CONF_BH_NOTE, CONF_COLLECTION_DAY, CONF_EXPIRY_NOTE,
+    CONF_ACTIVE_UNTIL, CONF_BASE_URL, CONF_BH_NOTE, CONF_COLLECTION_DAY, CONF_EXPIRY_NOTE,
     CONF_NAME_FOOD, CONF_NAME_GARDEN, CONF_NAME_RECYCLING, CONF_NAME_REFUSE,
     CONF_THRESHOLD_DAYS, CONF_TITLE_PREFIX, CONF_UPDATE_HOURS, CONF_UPCOMING_DAYS,
-    CONF_VERSION, DEFAULT_DAY, DEFAULT_THRESHOLD_DAYS, DEFAULT_UPDATE_HOURS,
-    DEFAULT_UPCOMING_DAYS, DEFAULT_VERSION, DOMAIN, STORAGE_VERSION,
+    CONF_VERSION, DEFAULT_DAY, DEFAULT_ACTIVE_UNTIL, DEFAULT_THRESHOLD_DAYS,
+    DEFAULT_UPDATE_HOURS, DEFAULT_UPCOMING_DAYS, DEFAULT_VERSION, DOMAIN, STORAGE_VERSION,
 )
 
 if TYPE_CHECKING:
@@ -47,6 +47,7 @@ class BinsData:
     days_until_expiry: int | None
     expiring_soon: bool
     upcoming: bool
+    active_until: str
     source: str | None
     download_error: str | None
 
@@ -182,6 +183,7 @@ class HertsmereBinsCoordinator(DataUpdateCoordinator[BinsData]):
             title_prefix=title_prefix, valid_until=valid_until,
             days_until_expiry=days_left, expiring_soon=expiring_soon,
             upcoming=upcoming,
+            active_until=str(opts.get(CONF_ACTIVE_UNTIL) or DEFAULT_ACTIVE_UNTIL)[:5],
             source=", ".join(sorted(self._sources)) or None,
             download_error=download_error,
         )

@@ -47,6 +47,11 @@ four bins (this is the actual text shown in the state and the `bins` attribute),
 **bank-holiday note** text (blank to append nothing). W1 weeks show food + non-recyclable;
 W2 weeks show food + recycling + garden.
 
+**Active until** (default `23:59`) sets the time on the collection day after which the
+supplied cards hide themselves. It is exposed as the `active_until` sensor attribute and
+compared with the current time by a `template` visibility condition in `bin_card_tile.yaml`
+and `bin_card_badge.yaml`; the sensor itself is unaffected. Re-paste the card YAML to use it.
+
 ## Known limitations
 - **Collection weekday** is not in the PDF (address-specific), so you set it.
 - **Bank-holiday day-shifts** are not modelled: the bank-holiday flag/note tell you the

@@ -42,11 +42,13 @@
           "expiry_note": "Expiry note (icon hover text)",
           "title_prefix": "Card title prefix",
           "update_hours": "Refresh interval",
-          "upcoming_days": "Upcoming notice"
+          "upcoming_days": "Upcoming notice",
+          "active_until": "Active until (collection day)"
         },
         "data_description": {
           "threshold_days": "When the loaded calendar has this many days left, the integration tries to download the next one and warns you if that fails.",
           "upcoming_days": "How many days before collection the 'upcoming' attribute is set to true. 0 means only the collection day itself; 1 means also the day before; and so on.",
+          "active_until": "Time of day after which the card hides itself on the collection day (default 23:59). Exposed as the active_until attribute; the supplied card examples compare it with the current time.",
           "bank_holiday_note": "Hover text for the bank-holiday icon on the card.",
           "expiry_note": "Hover text for the expiry-warning icon on the card.",
           "title_prefix": "Prefix for the card title, e.g. 'Bin collection:'.",

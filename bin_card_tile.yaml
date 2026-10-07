@@ -3,6 +3,11 @@ visibility:
   - condition: state
     attribute: upcoming
     state: 'true'
+  - condition: template
+    value_template: >-
+      {% set e = 'sensor.hertsmere_bin_collection_this_week' %}
+      {{ not state_attr(e, 'is_collection_day')
+         or now().strftime('%H:%M') <= state_attr(e, 'active_until') }}
 entity: sensor.hertsmere_bin_collection_this_week
 icon: mdi:trash-can-outline
 color: red
